@@ -1,5 +1,7 @@
 # import libraries
 import sys
+import os.path
+import pickle
 import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine,MetaData
@@ -55,14 +57,23 @@ def tokenize(text):
     return tokens
 
 
-def build_model():
+def build_model(model_path):
     
-    pipeline = Pipeline([
-    ('countvec',CountVectorizer(tokenizer=tokenize)),
-    ('tfidf',TfidfTransformer()),
-    #     ('lsa',TruncatedSVD(random_state=42,n_components=100)),
-    ('clf',MultiOutputClassifier(xgboost.XGBClassifier(random_state=42,n_jobs=-1),n_jobs=-1))
-    ])
+    xg_params = {
+        'max_depth':5,
+        'colsample_bytree':0.8
+    }
+    
+    if ~os.path.isfile(model_path):
+        pipeline = Pipeline([
+        ('countvec',CountVectorizer(tokenizer=tokenize)),
+        ('tfidf',TfidfTransformer()),
+        #     ('lsa',TruncatedSVD(random_state=42,n_components=100)),
+        ('clf',MultiOutputClassifier(xgboost.XGBClassifier(random_state=42,n_jobs=10,**xg_params),n_jobs=10))
+        ])
+    
+    else:
+        pipeline = pickle.load(open(model_path,'rb'))
 
     return pipeline
 
@@ -83,8 +94,8 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 def save_model(model, model_filepath):
     
-    #TODO add condition to check if file already exists
-    if ~file_exists:
+    # condition to check if file already exists
+    if ~os.path.isfile(model_path):
         joblib.dump(model, model_filepath, compress = 1)
 
 
@@ -96,7 +107,7 @@ def main():
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
         
         print('Building model...')
-        model = build_model()
+        model = build_model(model_filepath)
         
         print('Training model...')
         model.fit(X_train, Y_train)
