@@ -21,6 +21,7 @@ import sklearn
 from sklearn.pipeline import Pipeline,FeatureUnion
 import xgboost
 from sklearn.multioutput import MultiOutputClassifier
+import joblib
 
 from sklearn.model_selection import train_test_split,GridSearchCV
 from sklearn.metrics import classification_report,precision_score,recall_score,roc_auc_score,balanced_accuracy_score
@@ -85,7 +86,7 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
     for i,col in enumerate(category_names):
         print(f'Predictions for {col}')
-        print(classification_report(y_test[col],preds_test[...,i]))
+        print(classification_report(Y_test[col],preds_test[...,i]))
 
     print(f'Precision score: {precision_score(Y_test,preds_test,average="macro")}')
     print(f'Recall: {recall_score(Y_test,preds_test,average="macro")}')
@@ -95,7 +96,7 @@ def evaluate_model(model, X_test, Y_test, category_names):
 def save_model(model, model_filepath):
     
     # condition to check if file already exists
-    if ~os.path.isfile(model_path):
+    if ~os.path.isfile(model_filepath):
         joblib.dump(model, model_filepath, compress = 1)
 
 
