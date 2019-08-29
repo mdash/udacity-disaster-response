@@ -21,4 +21,4 @@ A Support Vector Classifier was used on the training data. As is evident from th
 
 ![distribution of message categories][message_category_graph]
 
-[message_category_graph]: ./message_category.png "Logo Title Text 2"
+[message_category_graph]: ./message_categories.png "Logo Title Text 2"
