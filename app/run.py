@@ -73,7 +73,7 @@ def index():
                 {
             'data': [
                 Bar(
-                    x=category_names,
+                    x=[x.replace('_',' ') for x in category_names],
                     y=category_counts
                 )
             ],
@@ -84,7 +84,7 @@ def index():
                     'title': "# Messages"
                 },
                 'xaxis': {
-                    'title': "Message Type"
+                    'title': "Message Type"            
                 }
             }
         }
