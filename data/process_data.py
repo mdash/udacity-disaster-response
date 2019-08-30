@@ -4,6 +4,14 @@ import sqlalchemy
 import numpy as np
 
 def load_data(messages_filepath, categories_filepath):
+    """Load raw csv files.
+    
+    Arguments:
+    messages_filepath -- file path for messages dataset
+    categories_filepath -- file path for categories dataset
+    """
+    
+    
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
     df = messages.drop_duplicates().merge(categories.drop_duplicates(),how='outer')
