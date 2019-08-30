@@ -15,6 +15,12 @@ from sqlalchemy import create_engine
 app = Flask(__name__)
 
 def tokenize(text):
+    """Function to tokenize text - remove stopwords and lemmatize.
+    
+    Arguments:
+    text -- string to be tokenized before modeling
+    """
+
     tokens = word_tokenize(text)
     lemmatizer = WordNetLemmatizer()
 
@@ -37,7 +43,8 @@ model = joblib.load("../models/classifier.pkl")
 @app.route('/')
 @app.route('/index')
 def index():
-    
+    # Function to extract data for the index webpage
+
     # extract data needed for visuals
 
     # data for graph 1
@@ -101,6 +108,8 @@ def index():
 # web page that handles user query and displays model results
 @app.route('/go')
 def go():
+    # Function to predict results for the user message and display results
+    
     # save user input in query
     query = request.args.get('query', '') 
 
