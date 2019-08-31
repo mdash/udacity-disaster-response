@@ -29,20 +29,27 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.decomposition import LatentDirichletAllocation,TruncatedSVD
 
 def load_data(database_filepath):
+    """load data from sql database
     
-    # load data from database
-    engine = create_engine(database_filepath)
+    Arguments:
+    database_filepath -- path for sql database file with processed messages data
+    """
+    engine = create_engine('sqlite:///'+database_filepath)
     df = pd.read_sql_table('CleanMessages',con=engine)
-    X = df['message'].values
-    Y = df[[x for x in df.columns.values if x not in ['id','genre','message','original']]].values
-    category_names = df[[x for x in df.columns.values if x not in ['id','genre','message','original']]].columns.values
+    X = df['message']
+    Y = df[[x for x in df.columns.values if x not in ['id','genre','message','original']]]
     Y.drop(columns='child_alone',inplace=True)
-
+    category_names = Y.columns.values
     return X,Y,category_names
 
 
 def tokenize(text):
+    """Function to tokenize text - remove stopwords and lemmatize.
     
+    Arguments:
+    text -- string to be tokenized before modeling
+    """
+
     stop_words = stopwords.words("english")
     lemmatizer = WordNetLemmatizer()
     
@@ -59,28 +66,45 @@ def tokenize(text):
 
 
 def build_model(model_path):
+    """Function to build a pipeline for classifying messages using SVC.
     
-    xg_params = {
-        'max_depth':5,
-        'colsample_bytree':0.8
-    }
+    Arguments:
+    model_path -- path to pkl file for saved model to check if it already exists
+    """ 
     
     if ~os.path.isfile(model_path):
+        
+        #TODO Add SVC parameters to run grid search over
+        params = {
+            ''
+        }
+        
         pipeline = Pipeline([
         ('countvec',CountVectorizer(tokenizer=tokenize)),
         ('tfidf',TfidfTransformer()),
-        #     ('lsa',TruncatedSVD(random_state=42,n_components=100)),
-        ('clf',MultiOutputClassifier(xgboost.XGBClassifier(random_state=42,n_jobs=10,**xg_params),n_jobs=10))
+        ('lsa',TruncatedSVD(random_state=42,n_components=100)),
+        ('clf',MultiOutputClassifier(sklearn.svm.SVC(random_state=42,class_weight='balanced',
+                                                 gamma='scale')))
         ])
+        model = GridSearchCV(pipeline,params,cv=5,scoring='f1_samples')
     
     else:
-        pipeline = pickle.load(open(model_path,'rb'))
+        model = pickle.load(open(model_path,'rb'))
 
-    return pipeline
+    return model
 
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    """Evaluate performance of trained model on test data.
+    
+    Arguments:
+    model -- trained model whose performance is to be tested
+    X_test -- feature matrix for test data
+    Y_test -- labels matrix for test data
+    category_names -- multi label category names 
+    """
+    
     
     preds_test = model.predict(X_test)
 
@@ -94,13 +118,21 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+    """Save Model to specified path.
     
+    Arguments:
+    model -- trained model/pipeline to be saved
+    model_filepath -- path to save the model to
+    """
+
     # condition to check if file already exists
     if ~os.path.isfile(model_filepath):
         joblib.dump(model, model_filepath, compress = 1)
 
 
 def main():
+    # Main execution flow
+    
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
@@ -111,7 +143,9 @@ def main():
         model = build_model(model_filepath)
         
         print('Training model...')
-        model.fit(X_train, Y_train)
+        
+        if ~os.path.isfile(model_filepath):
+            model.fit(X_train, Y_train)
         
         print('Evaluating model...')
         evaluate_model(model, X_test, Y_test, category_names)

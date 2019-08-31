@@ -15,6 +15,12 @@ from sqlalchemy import create_engine
 app = Flask(__name__)
 
 def tokenize(text):
+    """Function to tokenize text - remove stopwords and lemmatize.
+    
+    Arguments:
+    text -- string to be tokenized before modeling
+    """
+
     tokens = word_tokenize(text)
     lemmatizer = WordNetLemmatizer()
 
@@ -26,25 +32,30 @@ def tokenize(text):
     return clean_tokens
 
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('sqlite:///../data/DisasterResponse.db')
+df = pd.read_sql_table('CleanMessages', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+model = joblib.load("../models/classifier.pkl")
 
 
 # index webpage displays cool visuals and receives user input text for model
 @app.route('/')
 @app.route('/index')
 def index():
-    
+    # Function to extract data for the index webpage
+
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
+
+    # data for graph 1
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
-    
+
+    # data for graph 2
+    category_names = [x for x in df.columns.values if x not in ['id','message','original','genre']]
+    category_counts = [df[col].sum() for col in category_names]
+
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
         {
             'data': [
@@ -63,6 +74,26 @@ def index():
                     'title': "Genre"
                 }
             }
+        },
+        
+        # graph 2 - distribution of message categories
+                {
+            'data': [
+                Bar(
+                    x=[x.replace('_',' ') for x in category_names],
+                    y=category_counts
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of Messages Types',
+                'yaxis': {
+                    'title': "# Messages"
+                },
+                'xaxis': {
+                    'title': "Message Type"            
+                }
+            }
         }
     ]
     
@@ -77,6 +108,8 @@ def index():
 # web page that handles user query and displays model results
 @app.route('/go')
 def go():
+    # Function to predict results for the user message and display results
+    
     # save user input in query
     query = request.args.get('query', '') 
 
@@ -93,7 +126,7 @@ def go():
 
 
 def main():
-    app.run(host='0.0.0.0', port=3001, debug=True)
+    app.run(host='127.0.0.1', port=5000, debug=True)
 
 
 if __name__ == '__main__':
