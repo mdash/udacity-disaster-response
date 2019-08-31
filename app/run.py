@@ -14,9 +14,10 @@ from sqlalchemy import create_engine
 
 app = Flask(__name__)
 
+
 def tokenize(text):
     """Function to tokenize text - remove stopwords and lemmatize.
-    
+
     Arguments:
     text -- string to be tokenized before modeling
     """
@@ -52,7 +53,8 @@ def index():
     genre_names = list(genre_counts.index)
 
     # data for graph 2
-    category_names = [x for x in df.columns.values if x not in ['id','message','original','genre']]
+    category_names = [x for x in df.columns.values
+                      if x not in ['id', 'message', 'original', 'genre']]
     category_counts = [df[col].sum() for col in category_names]
 
     # create visuals
@@ -75,12 +77,12 @@ def index():
                 }
             }
         },
-        
+
         # graph 2 - distribution of message categories
-                {
+        {
             'data': [
                 Bar(
-                    x=[x.replace('_',' ') for x in category_names],
+                    x=[x.replace('_', ' ') for x in category_names],
                     y=category_counts
                 )
             ],
@@ -91,16 +93,16 @@ def index():
                     'title': "# Messages"
                 },
                 'xaxis': {
-                    'title': "Message Type"            
+                    'title': "Message Type"
                 }
             }
         }
     ]
-    
+
     # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
     graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
-    
+
     # render web page with plotly graphs
     return render_template('master.html', ids=ids, graphJSON=graphJSON)
 
@@ -109,15 +111,15 @@ def index():
 @app.route('/go')
 def go():
     # Function to predict results for the user message and display results
-    
+
     # save user input in query
-    query = request.args.get('query', '') 
+    query = request.args.get('query', '')
 
     # use model to predict classification for query
     classification_labels = model.predict([query])[0]
     classification_results = dict(zip(df.columns[4:], classification_labels))
 
-    # This will render the go.html Please see that file. 
+    # This will render the go.html Please see that file.
     return render_template(
         'go.html',
         query=query,
